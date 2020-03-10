@@ -58,7 +58,6 @@ const actions = {
         roles.forEach((element, index) => {
           role[index] = element.name
         })
-        console.log(role)
         // roles must be a non-empty array
         if (!role || role.length <= 0) {
           reject('getInfo: roles must be a non-null array!')
@@ -78,7 +77,9 @@ const actions = {
   // user logout
   logout({ commit, state, dispatch }) {
     return new Promise((resolve, reject) => {
-      logout(state.token).then(() => {
+      const token = { token: '' }
+      token.token = state.token
+      logout(token).then(() => {
         commit('SET_TOKEN', '')
         commit('SET_ROLES', [])
         removeToken()

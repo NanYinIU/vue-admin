@@ -158,7 +158,6 @@ export default {
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm)
             .then((result) => {
-              console.log(result)
               this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
               this.loading = false
             })

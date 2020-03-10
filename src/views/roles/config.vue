@@ -2,64 +2,113 @@
   <div>
     <el-tabs v-model="activeName" tab-position="left" style="margin-top:30px" @tab-click="handleClick">
       <el-tab-pane
-        v-for="{id,name} in roles"
+        v-for="{id,name,comment} in roles"
         :key="id"
         :label="name"
         :name="''+id"
         >
-        <div class="app-container">
-          <div class="filter-container">
-            <el-input v-model="listQuery.search" placeholder="搜索Name" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-select v-model="listQuery.status" placeholder="账户状态" clearable style="width: 120px" class="filter-item">
-              <el-option v-for="item in standardStatusOption" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
-            <el-select v-model="listQuery.sex" placeholder="性别" clearable class="filter-item" style="width: 120px">
-              <el-option v-for="item in standardSexOptions" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
-            <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
-              查询
-            </el-button>
-            <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
-              添加
-            </el-button>
-          </div>
-          <el-table
-            :key="tableKey"
-            v-loading="listLoading"
-            :data="list"
-            border
-            fit
-            highlight-current-row
-            style="width: 100%;"
-          >
-            <el-table-column label="用户名" prop="username" align="center" width="160">
-              <template slot-scope="{row}">
-                <span>{{ row.name }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="姓名" prop="person.name" align="center" width="160">
-              <template slot-scope="{row}">
-                <span>{{ row.person.name }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="性别" prop="sex" align="center" width="80">
-              <template slot-scope="{row}">
-                <span>{{ row.sex.name }}</span>
-              </template>
-            </el-table-column>
+        <el-row style="margin-bottom: 20px;">
+          <el-alert
+            type="info"
+            effect="dark">
+            <i class="el-icon-info"></i> {{ comment }}
+          </el-alert>
+        </el-row>
+        <el-row :gutter="10">
+          <el-col :span="14">
+            <el-card class="box-card">
+              <div slot="header" class="clearfix">
+                <span>人员角色设置</span>
+                <el-button style="float: right; padding: 3px 0" type="text" @click="handleCreate">为角色添加人员</el-button>
+              </div>
 
-            <el-table-column label="账户状态" class-name="status-col" width="80">
-              <template slot-scope="{row}">
-                <el-tag :type="row.status.id | statusFilter">
-                  {{ row.status.name }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
+              <div class="app-container">
+                <div class="filter-container">
+                  <el-input v-model="listQuery.search" placeholder="搜索Name" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+                  <el-select v-model="listQuery.status" placeholder="账户状态" clearable style="width: 120px" class="filter-item">
+                    <el-option v-for="item in standardStatusOption" :key="item.id" :label="item.name" :value="item.id" />
+                  </el-select>
+                  <el-select v-model="listQuery.sex" placeholder="性别" clearable class="filter-item" style="width: 120px">
+                    <el-option v-for="item in standardSexOptions" :key="item.id" :label="item.name" :value="item.id" />
+                  </el-select>
+                  <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
+                    查询
+                  </el-button>
+                </div>
+                <el-table
+                  :key="tableKey"
+                  v-loading="listLoading"
+                  :data="list"
+                  border
+                  fit
+                  highlight-current-row
+                  style="width: 100%;"
+                >
+                  <el-table-column label="用户名" prop="username" align="center" width="160">
+                    <template slot-scope="{row}">
+                      <span>{{ row.name }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="姓名" prop="person.name" align="center" width="160">
+                    <template slot-scope="{row}">
+                      <span>{{ row.person.name }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="性别" prop="sex" align="center" width="80">
+                    <template slot-scope="{row}">
+                      <span>{{ row.sex.name }}</span>
+                    </template>
+                  </el-table-column>
 
-          <pagination v-show="total>0" :total="total" :page.sync="listQuery.offset" :limit.sync="listQuery.limit" @pagination="getUsers" />
+                  <el-table-column label="账户状态" class-name="status-col" width="80">
+                    <template slot-scope="{row}">
+                      <el-tag :type="row.status.id | statusFilter">
+                        {{ row.status.name }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <pagination v-show="total>0" :total="total" :page.sync="listQuery.offset" :limit.sync="listQuery.limit" @pagination="getUsers" />
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="10">
+            <el-card class="box-card">
+              <div slot="header" class="clearfix">
+                <span>角色权限设置</span>
+                <el-button style="float: right; padding: 3px 0" type="text">添加权限</el-button>
+              </div>
+              <el-tag
+                :key="tag"
+                v-for="tag in dynamicTags"
+                closable
+                :disable-transitions="false"
+                @close="handleClose(tag)">
+                {{tag}}
+              </el-tag>
+              <el-input
+                class="input-new-tag"
+                v-if="inputVisible"
+                v-model="inputValue"
+                ref="saveTagInput"
+                size="small"
+                @keyup.enter.native="handleInputConfirm"
+                @blur="handleInputConfirm"
+              />
+              <el-select v-model="value" placeholder="请选择">
+                <el-option
+                  v-for="item in options"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+              <el-button class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
+            </el-card>
 
-        </div>
+          </el-col>
+        </el-row>
+
       </el-tab-pane>
     </el-tabs>
 
@@ -134,7 +183,26 @@ export default {
         value: [],
         movedKeys: [],
         direction: ''
-      }
+      },
+      dynamicTags: ['标签一', '标签二', '标签三'],
+      inputVisible: false,
+      inputValue: '',
+      options: [{
+        value: '选项1',
+        label: '黄金糕'
+      }, {
+        value: '选项2',
+        label: '双皮奶'
+      }, {
+        value: '选项3',
+        label: '蚵仔煎'
+      }, {
+        value: '选项4',
+        label: '龙须面'
+      }, {
+        value: '选项5',
+        label: '北京烤鸭'
+      }]
     }
   },
   created() {
@@ -211,6 +279,25 @@ export default {
       updateRoleUser(this.transferQuery).then(response => {
         this.getUsers()
       })
+    },
+    handleClose(tag) {
+      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
+    },
+
+    showInput() {
+      this.inputVisible = true
+      this.$nextTick(_ => {
+        this.$refs.saveTagInput.$refs.input.focus()
+      })
+    },
+
+    handleInputConfirm() {
+      const inputValue = this.inputValue
+      if (inputValue) {
+        this.dynamicTags.push(inputValue)
+      }
+      this.inputVisible = false
+      this.inputValue = ''
     }
   }
 }

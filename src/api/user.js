@@ -16,9 +16,10 @@ export function getInfo(token) {
   })
 }
 
-export function logout() {
+export function logout(data) {
   return request({
     url: '/api/user/logout',
-    method: 'post'
+    method: 'get',
+    params: data
   })
 }

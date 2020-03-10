@@ -5,13 +5,14 @@ Vue.use(Router)
 
 /* Layout */
 import Layout from '@/layout'
-
+// import users from '@/views/users/index'
 /* Router Modules */
-import componentsRouter from './modules/components'
-import chartsRouter from './modules/charts'
-import tableRouter from './modules/table'
-import nestedRouter from './modules/nested'
+// import componentsRouter from './modules/components'
+// import chartsRouter from './modules/charts'
+// import tableRouter from './modules/table'
+// import nestedRouter from './modules/nested'
 
+// import { getRouter } from '@/api/router'
 /**
  * Note: sub-menu only appear when route children.length >= 1
  * Detail see: https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html
@@ -145,17 +146,22 @@ export const asyncRoutes = [
     path: '/roles',
     component: Layout,
     name: 'Roles',
-    meta: { title: '角色管理', icon: 'user', noCache: true, role: ['admin'] },
+    meta: { title: '角色权限管理', icon: 'user', noCache: true, role: ['admin'] },
     children: [{
       path: 'index',
       component: () => import('@/views/roles/index'),
       name: 'Roles_Base',
-      meta: { title: '基本信息管理', icon: 'user', noCache: true, role: ['admin'] }
+      meta: { title: '角色信息管理', icon: 'user', noCache: true, role: ['admin'] }
     }, {
-      path: 'index2',
+      path: 'permission',
+      component: () => import('@/views/roles/permission'),
+      name: 'Permission_Base',
+      meta: { title: '权限信息管理', icon: 'user', noCache: true, role: ['admin'] }
+    }, {
+      path: 'config',
       component: () => import('@/views/roles/config'),
       name: 'Roles_Config',
-      meta: { title: '人员角色配置', icon: 'user', noCache: true, role: ['admin'] }
+      meta: { title: '角色权限配置', icon: 'user', noCache: true, role: ['admin'] }
     }]
   },
   {
@@ -214,10 +220,10 @@ export const asyncRoutes = [
   },
 
   /** when your routing map is too long, you can split it into small modules **/
-  componentsRouter,
-  chartsRouter,
-  nestedRouter,
-  tableRouter,
+  // componentsRouter,
+  // chartsRouter,
+  // nestedRouter,
+  // tableRouter,
 
   // {
   //   path: '/example',
@@ -415,6 +421,29 @@ export const asyncRoutes = [
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]
+
+// export const asyncRoutes = [
+//   {
+//     path: '/users',
+//     component: Layout,
+//     alwaysShow: false,
+//     async: false,
+//     children: [
+//       {
+//         path: 'index',
+//         component: () => import('@/views/users/index'),
+//         name: 'User',
+//         meta: { title: '用户管理', icon: 'user', noCache: true, role: ['admin'] }
+//       }
+//     ]
+//   }
+// ]
+// export const asyncRoutes = async() => {
+//   const response = await getRouter()
+//   // asyncRoutes =  response.data
+//   console.log(response.data)
+//   return response.data
+// }
 
 const createRouter = () => new Router({
   // mode: 'history', // require service support

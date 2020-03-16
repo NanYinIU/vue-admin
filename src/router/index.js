@@ -143,6 +143,18 @@ export const asyncRoutes = [
     ]
   },
   {
+    path: '/units',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/unit/index'),
+        name: 'Unit',
+        meta: { title: '单位管理', icon: 'user', noCache: true, role: ['admin'] }
+      }
+    ]
+  },
+  {
     path: '/roles',
     component: Layout,
     name: 'Roles',

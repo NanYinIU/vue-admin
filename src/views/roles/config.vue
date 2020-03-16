@@ -6,7 +6,7 @@
         :key="id"
         :label="name"
         :name="''+id"
-        >
+      >
         <el-row style="margin-bottom: 20px;">
           <el-alert
             type="info"
@@ -15,10 +15,10 @@
           </el-alert>
         </el-row>
         <el-row :gutter="10">
-          <el-col :span="14">
+          <el-col :span="13">
             <el-card class="box-card">
               <div slot="header" class="clearfix">
-                <span>人员角色设置</span>
+                <span>角色人员设置</span>
                 <el-button style="float: right; padding: 3px 0" type="text" @click="handleCreate">为角色添加人员</el-button>
               </div>
 
@@ -76,34 +76,29 @@
             <el-card class="box-card">
               <div slot="header" class="clearfix">
                 <span>角色权限设置</span>
-                <el-button style="float: right; padding: 3px 0" type="text">添加权限</el-button>
+                <el-button style="float: right; padding: 3px 0" type="text" @click="handlePermissionCreate">为角色添加权限</el-button>
               </div>
-              <el-tag
-                :key="tag"
-                v-for="tag in dynamicTags"
-                closable
-                :disable-transitions="false"
-                @close="handleClose(tag)">
-                {{tag}}
-              </el-tag>
-              <el-input
-                class="input-new-tag"
-                v-if="inputVisible"
-                v-model="inputValue"
-                ref="saveTagInput"
-                size="small"
-                @keyup.enter.native="handleInputConfirm"
-                @blur="handleInputConfirm"
-              />
-              <el-select v-model="value" placeholder="请选择">
-                <el-option
-                  v-for="item in options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
-                </el-option>
-              </el-select>
-              <el-button class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
+              <el-table
+                :key="authTableKey"
+                v-loading="authListLoading"
+                :data="authList"
+                border
+                fit
+                highlight-current-row
+                style="width: 100%;"
+              >
+                <el-table-column label="权限名" prop="username" align="center" width="160">
+                  <template slot-scope="{row}">
+                    <span>{{ row.name }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="权限备注" prop="comment" align="center" width="300">
+                  <template slot-scope="{row}">
+                    <span>{{ row.comment }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <pagination v-show="total>0" :total="authTotal" :page.sync="authListQuery.offset" :limit.sync="authListQuery.limit" @pagination="getPermissions" />
             </el-card>
 
           </el-col>
@@ -120,9 +115,25 @@
         :titles="['人员表', '角色人员']"
         :button-texts="['取消', '添加']"
         :data="listData"
-        @change="handleTransferChange"/>
+        @change="handleAuthTransferChange"/>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
+          关闭
+        </el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="添加/取消权限" :visible.sync="authDialogFormVisible">
+      <el-transfer
+        v-model="authValue"
+        filterable
+        filter-placeholder="请输入名称"
+        :titles="['权限表', '角色权限']"
+        :button-texts="['取消', '添加']"
+        :data="authListData"
+        @change="handleAuthTransferChange"/>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="authDialogFormVisible = false">
           关闭
         </el-button>
       </div>
@@ -132,8 +143,9 @@
 </template>
 <script>
 
-import { fetchRoleList, fetchRoleUsers, updateRoleUser } from '@/api/roles'
+import { fetchRoleList, fetchRoleUsers, updateRoleUser, fetchRolePermissions, updateRolePermissions } from '@/api/roles'
 import { fetchUserList, fetchStandardSexItem, fetchStandardStatusItem } from '@/api/users'
+import { fetchPermissionList } from '@/api/permission'
 import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination'
 export default {
@@ -184,25 +196,25 @@ export default {
         movedKeys: [],
         direction: ''
       },
-      dynamicTags: ['标签一', '标签二', '标签三'],
-      inputVisible: false,
-      inputValue: '',
-      options: [{
-        value: '选项1',
-        label: '黄金糕'
-      }, {
-        value: '选项2',
-        label: '双皮奶'
-      }, {
-        value: '选项3',
-        label: '蚵仔煎'
-      }, {
-        value: '选项4',
-        label: '龙须面'
-      }, {
-        value: '选项5',
-        label: '北京烤鸭'
-      }]
+      authTableKey: 0,
+      authListQuery: {
+        sort: '+id',
+        role: '',
+        offset: 1,
+        limit: 10
+      },
+      authList: null,
+      authTotal: 0,
+      authListLoading: true,
+      authListData: [],
+      authValue: [],
+      authDialogFormVisible: false,
+      authTransferQuery: {
+        standardKey: '',
+        value: [],
+        movedKeys: [],
+        direction: ''
+      }
     }
   },
   created() {
@@ -213,11 +225,13 @@ export default {
       fetchRoleList().then(response => {
         this.roles = response.data.content
         this.listQuery.role = response.data.content[0].id
+        this.authListQuery.role = response.data.content[0].id
         this.activeName = response.data.content[0].id + ''
       }).then(() => {
         this.getStandardSex()
         this.getStandardStatus()
         this.getUsers()
+        this.getPermissions()
       })
     },
     getStandardSex() {
@@ -239,10 +253,21 @@ export default {
         }, 1.5 * 1000)
       })
     },
+    getPermissions() {
+      fetchPermissionList(this.authListQuery).then(response => {
+        this.authList = response.data.content
+        this.authTotal = response.data.totalElements
+        setTimeout(() => {
+          this.authListLoading = false
+        }, 1.5 * 1000)
+      })
+    },
     handleClick(tab) {
       this.listQuery.role = tab.name
+      this.authListQuery.role = tab.name
       this.roleId = tab.name
       this.getUsers()
+      this.getPermissions()
     },
     handleFilter() {
       this.listQuery.offset = 1
@@ -252,7 +277,7 @@ export default {
       this.listData = []
       this.userValue = []
       this.dialogFormVisible = true
-      this.roleQuery.role = this.listQuery.role
+      this.roleQuery.role = this.authListQuery.role
       fetchRoleUsers(this.roleQuery).then(response => {
         // this.list = response.data.content
         response.data.otr.forEach(item => {
@@ -278,6 +303,37 @@ export default {
       console.log(this.transferQuery)
       updateRoleUser(this.transferQuery).then(response => {
         this.getUsers()
+      })
+    },
+    handlePermissionCreate() {
+      this.authListData = []
+      this.authValue = []
+      this.authDialogFormVisible = true
+      this.roleQuery.role = this.authListQuery.role
+      fetchRolePermissions(this.authListQuery).then(response => {
+        // this.list = response.data.content
+        response.data.otr.forEach(item => {
+          this.authListData.push({
+            label: item.name,
+            key: item.id
+          })
+        })
+        response.data.cur.forEach(item => {
+          this.authValue.push(item.id)
+        })
+        console.log(this.authListData)
+        console.log(this.authValue)
+      })
+    },
+    handleAuthTransferChange(value, direction, movedKeys) {
+      console.log(value, direction, movedKeys)
+      this.authTransferQuery.value = value
+      this.authTransferQuery.direction = direction
+      this.authTransferQuery.standardKey = this.listQuery.role
+      this.authTransferQuery.movedKeys = movedKeys
+      console.log(this.authTransferQuery)
+      updateRolePermissions(this.authTransferQuery).then(response => {
+        this.getPermissions()
       })
     },
     handleClose(tag) {

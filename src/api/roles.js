@@ -46,3 +46,19 @@ export function updateRoleUser(data) {
     data
   })
 }
+
+export function fetchRolePermissions(params) {
+  return request({
+    url: '/api/role/permissions',
+    method: 'get',
+    params: params
+  })
+}
+
+export function updateRolePermissions(data) {
+  return request({
+    url: '/api/role/permissions',
+    method: 'post',
+    data
+  })
+}
